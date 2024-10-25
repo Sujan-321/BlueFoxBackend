@@ -1,0 +1,277 @@
+1. Project Setup (Day 1)
+
+    Install Django and DRF.
+    Set up a new Django project and app for user and order management.
+    Set up your environment (e.g., virtual environment) and install any necessary dependencies.
+
+
+
+
+
+                                Here what we do to solve the 'Day 1' Task
+
+        Step 1: 
+                a. Install Django and DRF:
+
+                    Create a virtual environment: It’s a good practice to work inside a virtual environment to keep your dependencies isolated.
+                        Command:
+
+                            python -m venv env
+                            source env/bin/activate  # On Windows, use: env\Scripts\activate
+
+                b. Install Django and Django Rest Framework: 
+                    After activating your virtual environment, install the necessary packages:
+                        command:
+
+                            pip install django djangorestframework
+
+
+                c. Create a new Django project: 
+                    Initialize a new Django project called ecommerce_backend (or another name you prefer).
+                        command:
+                            django-admin startproject ecommerce_backend
+                            cd ecommerce_backend  
+
+
+                d. Start a new app for user and order management:
+                    Inside your Django project, create a new app named accounts for user management and orders for order processing.          
+                        command:
+                            python manage.py startapp accounts
+                            python manage.py startapp orders
+
+                e. Add the apps to INSTALLED_APPS: 
+                    Open settings.py in the ecommerce_backend project folder and add the newly created apps, along with rest_framework
+
+                        Process:
+                            INSTALLED_APPS = [
+                                # Django default apps
+                                'django.contrib.admin',
+                                'django.contrib.auth',
+                                'django.contrib.contenttypes',
+                                'django.contrib.sessions',
+                                'django.contrib.messages',
+                                'django.contrib.staticfiles',
+
+                                # Third-party apps
+                                'rest_framework',
+
+                                # Local apps
+                                'accounts',
+                                'orders',
+                            ]
+                
+                f. Make initial migrations: 
+                    Run migrations to set up the default database structure.
+                        command: 
+                            python manage.py migrate
+                            python manage.py runserver
+
+
+
+
+
+2. Design the Models (Day 2)
+
+    User Profile Model: Utilize Django’s built-in User model, or extend it with a custom user model if more fields are required (e.g., phone number, address).
+    Order Model: Create an order model with fields for order details (e.g., product, quantity, price, status).
+    Payment Model: Add a model for managing payment details (e.g., amount, status, payment date).
+
+
+
+
+    Step 2: Design the Models
+
+        a. Custom User Profile Model:
+            We will extend the built-in User model using a Profile model that links to the Django User model via a One-to-One relationship.
+
+            code:
+                # accounts/models.py
+                from django.contrib.auth.models import User
+                from django.db import models
+                from django.db.models.signals import post_save
+                from django.dispatch import receiver
+
+
+                class UserProfile(models.Model):
+                    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Link to Django User model
+                    first_name = models.CharField(max_length=50)
+                    last_name = models.CharField(max_length=50)
+                    email = models.EmailField(max_length=100)
+                    phone_no = models.CharField(max_length=15)
+                    address = models.TextField()
+                    profile_img = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+
+                    def __str__(self):
+                        return f'{self.user.username} Profile'
+
+        b. Order Model
+            In the orders app, create an Order model to manage product order details. This will store product information, quantity, price, and status.
+
+            code:
+                from django.db import models
+                from django.contrib.auth.models import User
+
+                class Order(models.Model):
+                    STATUS_CHOICES = (
+                        ('pending', 'Pending'),
+                        ('shipped', 'Shipped'),
+                        ('delivered', 'Delivered'),
+                        ('cancelled', 'Cancelled'),
+                    )
+                    
+                    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+                    product_name = models.CharField(max_length=100)
+                    quantity = models.PositiveIntegerField()
+                    price = models.DecimalField(max_digits=10, decimal_places=2)
+                    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+                    order_date = models.DateTimeField(auto_now_add=True)
+
+                    def __str__(self):
+                        return f"Order {self.id} - {self.product_name}"
+        
+        c. Payment Model(insideorder model)
+            Next, create a Payment model to handle payment information for the orders.
+
+            code:
+                class Payment(models.Model):
+                PAYMENT_STATUS = (
+                    ('pending', 'Pending'),
+                    ('completed', 'Completed'),
+                    ('failed', 'Failed'),
+                )
+                
+                order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
+                amount = models.DecimalField(max_digits=10, decimal_places=2)
+                status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+                payment_date = models.DateTimeField(auto_now_add=True)
+
+                def __str__(self):
+                    return f"Payment for Order {self.order.id}"
+
+        
+        d. Linking Profile to User:
+            Make sure that every time a user is created, a corresponding Profile is also created. You can use Django signals to automatically create or update the Profile when a User is saved.
+
+            code:
+                from django.db.models.signals import post_save
+                from django.dispatch import receiver
+
+                @receiver(post_save, sender=User)
+                def create_or_update_user_profile(sender, instance, created, **kwargs):
+                    if created:
+                        Profile.objects.create(user=instance)
+                    instance.profile.save()
+
+
+        e. Migration:
+            After defining these models, we need to make migrations and migrate them to the database.
+            command:
+                python manage.py makemigrations
+                python manage.py migrate
+        
+        f. Admin Registration
+            To make sure you can manage these models in the Django admin panel, register them in admin.py of the accounts and orders apps
+                i. In the accounts/admin.py file:
+                    You only need to register the Profile model because it's part of the accounts app.
+
+                    code:
+                        from django.contrib import admin
+                        from .models import Profile
+
+                        admin.site.register(Profile)
+
+                ii. In the orders/admin.py file:
+                    Here, you register the Order and Payment models since they belong to the orders app.
+                    code:
+                        from django.contrib import admin
+                        from .models import Order, Payment
+
+                        admin.site.register(Order)
+                        admin.site.register(Payment)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3. User Account Management API (Days 3-4)
+
+    Registration and Login: Use Django’s authentication system or DRF’s dj-rest-auth or djoser to handle user registration, login, and logout.
+    Profile Management: Create API views to allow users to edit their profile.
+        API endpoints:
+            GET /profile/ (view profile)
+            PUT /profile/ (edit profile)
+
+
+
+    Step 3: Authentication Setup: Registration and Login
+            To handle user authentication (registration, login, and logout), we can use dj-rest-auth or djoser. Here, we'll use dj-rest-auth, which is simple and works well with Django's authentication system and Django Rest Framework (DRF).
+            1.1. Install dj-rest-auth and django-allauth
+
+            These libraries help us easily set up authentication endpoints for user registration, login, and logout.
+
+                command: 
+                    pip install dj-rest-auth django-allauth
+
+
+
+
+
+
+
+
+
+
+
+
+4. Order Processing API (Days 5-6)
+
+    Place Orders: Create API endpoints to allow users to place an order.
+        API endpoint:
+            POST /orders/ (place a new order)
+    Track Orders: Implement API to allow users to track the status of their orders.
+        API endpoint:
+            GET /orders/<id>/ (view specific order details)
+    Order History: Implement a user-specific endpoint to view all past orders.
+        API endpoint:
+            GET /orders/ (view order history)
+
+
+5. Payment Management API (Day 7)
+
+    Manage Payment Status: Create endpoints to handle payment status updates.
+        API endpoints:
+            POST /payments/ (initiate a payment)
+            PUT /payments/<id>/ (update payment status)
+
+
+
+6. Integrate Authentication (Day 8)
+
+    Implement token-based authentication (JWT or OAuth2) to secure the API.
+    Ensure that only authenticated users can access the order and profile management endpoints.
+
+
+
+7. Testing (Day 9)
+
+    Write unit tests for each API endpoint.
+    Test edge cases, such as invalid input, unauthorized access, etc.
+
+
+
+8. Final Review and Documentation (Day 10)
+
+    Review the code for any optimizations or improvements.
+    Write API documentation using tools like Swagger or DRF’s built-in documentation.
+
