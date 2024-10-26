@@ -5,12 +5,15 @@ from django.contrib.auth.models import User
 from rest_framework.response import Response
 from django.http import HttpResponse
 from dj_rest_auth.registration.serializers import RegisterSerializer
+from rest_framework.permissions import AllowAny
 # import status
 
 from dj_rest_auth.registration.views import RegisterView
 
 class CustomRegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
+    queryset = UserProfile.objects.all()  # or the appropriate model
+    serializer_class = RegisterSerializer  # Make sure this serializer exists
+    permission_classes = [AllowAny]  # Allows any user to access this endpoint
     
     def create(self, request, *args, **kwargs):
         # Validate and create the user using the serializer

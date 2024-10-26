@@ -1,0 +1,37 @@
+Step-by-Step Guide for API Access from the Frontend
+
+1.    User Registration:
+        When the user submits their registration form, capture their details (username, password, email).
+        Send a POST request to the registration endpoint (e.g., /api/register/).
+        On successful registration, inform the user and possibly log them in automatically.
+
+2.    User Login:
+        After registration, or if they’re returning users, prompt the user for their credentials (username and password).
+        Send a POST request to the login endpoint (e.g., /api/token/).
+        Store the received access and refresh tokens securely (e.g., in local storage or cookies).
+
+3.    Access Protected API Endpoints:
+        For any protected resources (like user profile, order history), add the Authorization header to requests. Use the access token obtained during login.
+        Example: For fetching the user profile, send a GET request to the profile endpoint (e.g., /api/profile/) with the token in the header.
+
+4.    Handle Token Expiry:
+        Implement a check for token expiration before making requests.
+        If the access token is expired, use the refresh token to obtain a new access token by sending a POST request to the refresh endpoint (e.g., /api/token/refresh/).
+
+5.    Logging Out:
+        Provide a logout option in your frontend.
+        When the user logs out, clear the stored tokens and optionally send a request to the logout endpoint (e.g., /api/logout/).
+
+6.    User Experience:
+        Ensure to handle success and error responses gracefully. Inform users of the results of their actions (e.g., registration success, login failure, order placement).
+        Maintain a user-friendly interface by displaying loading indicators during API requests and appropriate messages for various actions.
+
+Summary of Key Actions
+
+    Register → Capture user details and call the registration API.
+    Login → Get tokens and store them.
+    Access APIs → Use the access token to interact with protected endpoints.
+    Refresh Tokens → Manage token expiry.
+    Logout → Clear tokens and optionally call the logout API.
+
+This flow will allow users to interact with your backend APIs securely and effectively through your frontend application. Let me know if you have any questions or need further details!

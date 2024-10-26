@@ -21,20 +21,31 @@ from django.conf import settings
 from django.conf.urls.static import static
 from accounts.views import home  # Import the home view
 
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),  # Include the accounts app URLs
     path('', home, name='home'),  # Root URL
+    path('api/orders/', include('orders.urls')),  # Include orders app URLs
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),      # To log in and get access token
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),      # To refresh access token
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
 
-# available api
+# available api for accounts
 # Now, the following endpoints will be available:
 
 #     POST /api/accounts/auth/login/ for login
 #     POST /api/accounts/auth/logout/ for logout
 #     POST /api/accounts/auth/registration/ for registration
+
+
+# avaliable api for orders
